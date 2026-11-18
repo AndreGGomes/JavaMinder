@@ -1,0 +1,89 @@
+package javaminnder.service;
+
+import java.util.List;
+import java.util.Optional;
+import javaminnder.exception.AuthException;
+import javaminnder.exception.ValidationException;
+import javaminnder.model.User;
+import javaminnder.model.UserRole;
+import javaminnder.repository.UserRepository;
+import javaminnder.security.Pbkdf2PasswordHasher;
+import javaminnder.util.Validators;
+
+/** Regras de cadastro, autenticação e troca de senha. */
+public class AuthService {
+
+    private final UserRepository users;
+    private final Pbkdf2PasswordHasher passwordHasher;
+    private final Session session;
+
+    public AuthService(
+            UserRepository users, Pbkdf2PasswordHasher passwordHasher, Session session) {
+        this.users = users;
+        this.passwordHasher = passwordHasher;
+        this.session = session;
+    }
+
+    /**
+     * Cadastra um usuário. O primeiro usuário do sistema nasce como ADMIN,
+     * os demais como USER.
+     */
+    public User register(String username, String email, String password) {
+        String cleanName = Validators.requireText(username, "nome", 2, 60);
+        String cleanEmail = Validators.requireEmail(email);
+        Validators.requirePassword(password);
+
+        if (users.existsByEmail(cleanEmail)) {
+            throw new ValidationException("Já existe uma conta com o e-mail " + cleanEmail + ".");
+        }
+
+        UserRole role = users.count() == 0 ? UserRole.ADMIN : UserRole.USER;
+        User user = new User(cleanName, cleanEmail, passwordHasher.hash(password), role);
+        users.save(user);
+        return user;
+    }
+
+    /** Autentica e abre a sessão. Mensagem genérica para não revelar qual campo errou. */
+    public User login(String email, String password) {
+        String cleanEmail = Validators.requireEmail(email);
+        if (password == null || password.isEmpty()) {
+            throw new ValidationException("Informe a senha.");
+        }
+        User user = users.findByEmail(cleanEmail)
+                .orElseThrow(() -> new AuthException("E-mail ou senha inválidos."));
+        if (!passwordHasher.verify(password, user.getPasswordHash())) {
+            throw new AuthException("E-mail ou senha inválidos.");
+        }
+        session.login(user);
+        return user;
+    }
+
+    public void logout() {
+        session.logout();
+    }
+
+    public boolean isAuthenticated() {
+        return session.isAuthenticated();
+    }
+
+    public void changePassword(User user, String currentPassword, String newPassword) {
+        if (!passwordHasher.verify(currentPassword, user.getPasswordHash())) {
+            throw new AuthException("Senha atual incorreta.");
+        }
+        Validators.requirePassword(newPassword);
+        if (currentPassword.equals(newPassword)) {
+            throw new ValidationException("A nova senha precisa ser diferente da atual.");
+        }
+        user.setPasswordHash(passwordHasher.hash(newPassword));
+        user.touch();
+        users.update(user);
+    }
+
+    public List<User> listUsers() {
+        return users.findAll();
+    }
+
+    public Optional<User> findById(long id) {
+        return users.findById(id);
+    }
+}
