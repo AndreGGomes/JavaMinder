@@ -1,16 +1,10 @@
 # JavaMinder
 
-Gerenciador de assinaturas **100% linha de comando**, escrito **apenas em Java**
-(JDK pura, sem Maven/Gradle, sem Spring, sem servidor web). A persistência é feita
-em **arquivos JSON** — nenhum banco de dados é usado.
-
-É uma releitura do SubMinder (Spring Boot + PostgreSQL + frontend web) como
-aplicação de console, mantendo as mesmas funcionalidades de negócio: cadastro,
-login e gerenciamento de assinaturas.
+Uma ferramenta para controlar gastos com assinaturas.
 
 ## Requisitos
 
-- JDK 17 ou superior (`javac` e `java` no PATH)
+- JDK 21 ou superior (`javac` e `java` no PATH) — o build usa `--release 21`
 
 ## Como compilar e executar
 
@@ -36,7 +30,7 @@ Outras opções:
 Também é possível rodar direto na JVM:
 
 ```bash
-javac -encoding UTF-8 -d out $(find src -name '*.java')
+javac -encoding UTF-8 --release 21 -d out $(find src -name '*.java')
 java -cp out javaminnder.Main
 ```
 
@@ -136,16 +130,17 @@ pensada para receber as regras de design by contract.
 As gravações são atômicas (arquivo temporário + `ATOMIC_MOVE`), então uma
 interrupção no meio da escrita não corrompe o JSON.
 
-## Relação com o SubMinder
+## Verificação JML (OpenJML)
 
-| SubMinder | JavaMinder |
-| --- | --- |
-| Spring Boot / Tomcat | JVM pura, `main` + menus de terminal |
-| Controller REST `/api/...` | telas de CLI |
-| `SecurityFilterChain` + JWT | `Session` em memória + `AuthService` |
-| JPA/Hibernate + PostgreSQL | `Repository` + JSON em arquivo |
-| BCrypt (Spring Security) | PBKDF2 da JDK |
-| HTML/CSS/JS | `Console` + telas concretas de terminal |
+A classe `service/Session` está anotada com JML (em comentários `/*@ ... @*/`,
+ignorados pelo `javac`) e pode ser verificada estaticamente:
 
-Nenhuma dependência de terceiros é usada: apenas pacotes da JDK
-(`java.nio.file`, `java.time`, `javax.crypto`, `java.util`).
+```bash
+./jml-check.sh
+```
+
+O script compila com `./build.sh` e roda o `--esc` do OpenJML só na `Session`
+(as demais classes entram pela classpath, sem specs). A ferramenta não é
+dependência do projeto: baixe o release Linux do
+[OpenJML 21](https://github.com/OpenJML/OpenJML/releases), extraia em
+`.tools/openjml` (pasta ignorada no git) e rode o script.
