@@ -14,6 +14,14 @@ fi
 # javac ignora as anotações /*@ ... @*/: o build normal precisa continuar passando.
 ./build.sh
 
-# User/AuthException entram pela classpath (binárias, sem specs):
-# o ESC verifica apenas a Session.
-"$OPENJML" --esc -cp out src/javaminnder/service/Session.java
+# Classes anotadas, na ordem em que foram provadas. As demais entram pela
+# classpath (binárias, sem specs) e não são verificadas pelo ESC.
+FILES=(
+  src/javaminnder/model/Describable.java
+  src/javaminnder/model/UserRole.java
+  src/javaminnder/model/SubscriptionStatus.java
+  src/javaminnder/model/BillingCycle.java
+  src/javaminnder/service/Session.java
+)
+
+"$OPENJML" --esc -cp out "${FILES[@]}"
