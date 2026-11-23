@@ -132,15 +132,24 @@ interrupção no meio da escrita não corrompe o JSON.
 
 ## Verificação JML (OpenJML)
 
-A classe `service/Session` está anotada com JML (em comentários `/*@ ... @*/`,
-ignorados pelo `javac`) e pode ser verificada estaticamente:
+As classes já anotadas (`service/Session` e os enums de `model/`) usam JML em
+comentários `/*@ ... @*/`, ignorados pelo `javac`, e podem ser verificadas
+estaticamente:
 
 ```bash
 ./jml-check.sh
 ```
 
-O script compila com `./build.sh` e roda o `--esc` do OpenJML só na `Session`
-(as demais classes entram pela classpath, sem specs). A ferramenta não é
-dependência do projeto: baixe o release Linux do
+O script compila com `./build.sh` e roda o `--esc` do OpenJML na lista `FILES`
+(as demais classes entram pela classpath, sem specs).
+
+Regra do projeto: **toda classe que for alterada é anotada por inteiro** (todos
+os métodos e construtores com contrato), em ESC puro — sem `assume`, sem
+`skipesc` e sem RAC. Quando uma biblioteca não tem contrato utilizável pelo ESC
+(`BigDecimal`, `LocalDate`, `Optional`, `Collection.size`, …), a spec descreve só
+o que é demonstrável (por exemplo `ensures \result != null`) ou o código é
+trocado por uma versão provável.
+
+A ferramenta não é dependência do projeto: baixe o release Linux do
 [OpenJML 21](https://github.com/OpenJML/OpenJML/releases), extraia em
 `.tools/openjml` (pasta ignorada no git) e rode o script.

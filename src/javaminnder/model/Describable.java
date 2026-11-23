@@ -7,5 +7,8 @@ package javaminnder.model;
 public interface Describable {
 
     /** Rótulo curto, em português, usado nos menus e relatórios. */
+    /*@ public normal_behavior
+      @   ensures \result != null;
+      @*/
     String label();
 }
