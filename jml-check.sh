@@ -21,6 +21,8 @@ FILES=(
   src/javaminnder/model/UserRole.java
   src/javaminnder/model/SubscriptionStatus.java
   src/javaminnder/model/BillingCycle.java
+  src/javaminnder/util/Validators.java
+  src/javaminnder/model/BaseEntity.java
   src/javaminnder/service/Session.java
 )
 
