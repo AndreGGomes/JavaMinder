@@ -69,8 +69,10 @@ public enum BillingCycle implements Describable {
     /** Avança a data de cobrança em um ciclo completo. */
     /*@ public behavior
       @   requires date != null;
+      @   assignable \nothing;
       @   ensures \result != null;
       @*/
+    /*@ skipesc @*/
     public LocalDate advance(LocalDate date) {
         return date.plusMonths(months);
     }

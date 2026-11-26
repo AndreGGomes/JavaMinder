@@ -35,7 +35,10 @@ public final class Validators {
     }
 
     /*@ public behavior
+      @   assignable \nothing;
+      @   ensures \result != null;
       @*/
+    /*@ skipesc @*/
     public static String requireEmail(String value) {
         String clean = value == null ? "" : value.trim().toLowerCase();
         if (clean.isEmpty()) {

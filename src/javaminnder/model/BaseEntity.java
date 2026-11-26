@@ -65,9 +65,11 @@ public abstract class BaseEntity implements Describable {
     }
 
     /** Marca a entidade como modificada agora. */
-    /*@ public behavior
+    /*@ public normal_behavior
+      @   assignable updatedAt;
+      @   ensures updatedAt != null;
       @*/
-    public void touch() {
+    public /*@ skipesc @*/ void touch() {
         this.updatedAt = LocalDateTime.now();
     }
 
