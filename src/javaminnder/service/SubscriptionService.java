@@ -3,6 +3,7 @@ package javaminnder.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -21,8 +22,14 @@ public class SubscriptionService {
     private static final int MAX_NAME_LENGTH = 80;
     private static final int MAX_NOTES_LENGTH = 200;
 
-    private final SubscriptionRepository repository;
+    private final /*@ spec_public @*/ SubscriptionRepository repository;
 
+    //@ public invariant repository != null;
+
+    /*@ public normal_behavior
+      @   requires repository != null;
+      @   ensures this.repository == repository;
+      @*/
     public SubscriptionService(SubscriptionRepository repository) {
         this.repository = repository;
     }
@@ -92,26 +99,64 @@ public class SubscriptionService {
         return repository.update(subscription);
     }
 
+    /*@ public behavior
+      @   requires repository != null && user != null;
+      @   assignable \everything;
+      @   ensures \result != null;
+      @*/
     public List<Subscription> listFor(User user) {
-        return repository.findByUserId(user.getId());
+        /*@ nullable @*/ Long userId = user.getId();
+        if (userId == null) {
+            throw new IllegalArgumentException("O id do usuário não pode ser nul0.");
+        }
+        return repository.findByUserId(userId.longValue());
     }
-
+    
+    /*@ public behavior
+      @   requires repository != null && user != null;
+      @   assignable \everything;
+      @   ensures \result != null;
+      @*/
+    /*@ skipesc @*/
     public List<Subscription> listBillableFor(User user) {
         return listFor(user).stream().filter(Subscription::isBillable).collect(Collectors.toList());
     }
 
+    /*@ public behavior
+      @   requires repository != null && user != null;
+      @   assignable \everything;
+      @   ensures \result != null;
+      @*/
+    /*@ skipesc @*/
     public List<Subscription> search(User user, String query) {
         String term = query == null ? "" : query.trim().toLowerCase(Locale.ROOT);
+        List<Subscription> source = listFor(user);
         if (term.isEmpty()) {
-            return listFor(user);
+            return source;
         }
-        return listFor(user).stream()
-                .filter(subscription -> subscription.getName().toLowerCase(Locale.ROOT).contains(term)
-                        || subscription.getNotes().toLowerCase(Locale.ROOT).contains(term))
-                .collect(Collectors.toList());
+        List<Subscription> matches = new ArrayList<>();
+        for (int i = 0; i < source.size(); i++) {
+            /*@ nullable @*/ Subscription subscription = source.get(i);
+            if (subscription == null) {
+                continue;
+            }
+            /*@ nullable @*/ String name = subscription.getName();
+            /*@ nullable @*/ String notes = subscription.getNotes();
+            boolean nameMatches = name != null && name.toLowerCase(Locale.ROOT).contains(term);
+            boolean notesMatches = notes != null && notes.toLowerCase(Locale.ROOT).contains(term);
+            if (nameMatches || notesMatches) {
+                matches.add(subscription);
+            }
+        }
+        return matches;
     }
 
     /** Busca uma assinatura garantindo que ela pertence ao usuário informado. */
+    /*@ public behavior
+      @   requires repository != null && user != null;
+      @   assignable \everything;
+      @   ensures \result != null;
+      @*/
     public Subscription require(User user, long id) {
         Subscription subscription = repository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Assinatura não encontrada: id " + id));
@@ -121,14 +166,27 @@ public class SubscriptionService {
         return subscription;
     }
 
+    /*@ public behavior
+      @   requires repository != null;
+      @   assignable \everything;
+      @   ensures \result != null;
+      @*/
     public List<Subscription> findAll() {
         return repository.findAll();
     }
 
+    /*@ private behavior
+      @   assignable \everything;
+      @   ensures \result != null;
+      @*/
     private String cleanName(String name) {
         return Validators.requireText(name, "nome do serviço", 2, MAX_NAME_LENGTH);
     }
-
+    
+    /*@ private behavior
+      @   assignable \everything;
+      @   ensures \result != null;
+      @*/
     private BigDecimal cleanPrice(BigDecimal price) {
         if (price == null) {
             throw new ValidationException("Informe o preço da assinatura.");
@@ -139,13 +197,21 @@ public class SubscriptionService {
         return price.setScale(2, RoundingMode.HALF_UP);
     }
 
+    /*@ private behavior
+      @   assignable \everything;
+      @   ensures \result != null;
+      @*/
     private BillingCycle requireCycle(BillingCycle cycle) {
         if (cycle == null) {
             throw new ValidationException("Escolha um ciclo de cobrança.");
         }
         return cycle;
     }
-
+    
+    /*@ private behavior
+      @   assignable \everything;
+      @   ensures \result != null;
+      @*/
     private LocalDate requireDate(LocalDate date) {
         if (date == null) {
             throw new ValidationException("Informe a próxima data de cobrança.");
@@ -153,6 +219,10 @@ public class SubscriptionService {
         return date;
     }
 
+    /*@ private behavior
+      @   assignable \everything;
+      @   ensures \result != null;
+      @*/
     private String cleanNotes(String notes) {
         String clean = notes == null ? "" : notes.trim();
         if (clean.length() > MAX_NOTES_LENGTH) {

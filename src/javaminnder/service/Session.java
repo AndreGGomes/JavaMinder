@@ -18,6 +18,7 @@ public class Session {
     }
 
     /*@ public normal_behavior
+      @   assignable this.currentUser;
       @   ensures currentUser == null;
       @*/
     public void logout() {
@@ -25,9 +26,10 @@ public class Session {
     }
 
     /*@ public normal_behavior
+      @   assignable \nothing;
       @   ensures \result <==> currentUser != null;
       @*/
-    public boolean isAuthenticated() {
+    public /*@ pure @*/ boolean isAuthenticated() {
         return currentUser != null;
     }
 

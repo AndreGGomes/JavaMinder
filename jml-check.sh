@@ -27,6 +27,7 @@ FILES=(
   src/javaminnder/model/Subscription.java
   src/javaminnder/service/Session.java
   src/javaminnder/service/AuthService.java
+  src/javaminnder/service/SubscriptionService.java
 )
 
 "$OPENJML" --esc -cp out "${FILES[@]}"

@@ -36,6 +36,10 @@ public class AuthService {
      * Cadastra um usuário. O primeiro usuário do sistema nasce como ADMIN,
      * os demais como USER.
      */
+    /*@ public behavior
+      @   assignable \everything;
+      @   ensures \result != null;
+      @*/
     public User register(String username, String email, String password) {
         String cleanName = Validators.requireText(username, "nome", 2, 60);
         String cleanEmail = Validators.requireEmail(email);
@@ -71,16 +75,27 @@ public class AuthService {
         return user;
     }
 
+    /*@ public normal_behavior
+      @   assignable session.*;
+      @*/
     public void logout() {
         session.logout();
     }
 
-    public boolean isAuthenticated() {
+    /*@ public normal_behavior
+      @   assignable \nothing;
+      @*/
+    public /*@ pure @*/ boolean isAuthenticated() {
         return session.isAuthenticated();
     }
-
+    
+    /*@ public behavior
+      @   requires user != null;
+      @   assignable \everything;
+      @*/
     public void changePassword(User user, String currentPassword, String newPassword) {
-        if (!passwordHasher.verify(currentPassword, user.getPasswordHash())) {
+        /*@ nullable @*/ String passwordHash = user.getPasswordHash();
+        if (passwordHash == null || !passwordHasher.verify(currentPassword, passwordHash)) {
             throw new AuthException("Senha atual incorreta.");
         }
         Validators.requirePassword(newPassword);
@@ -92,10 +107,20 @@ public class AuthService {
         users.update(user);
     }
 
+    /*@ public behavior
+      @   requires users != null;
+      @   assignable \everything;
+      @   ensures \result != null;
+      @*/
     public List<User> listUsers() {
         return users.findAll();
     }
 
+    /*@ public behavior
+      @   requires users != null;
+      @   assignable \everything;
+      @   ensures \result != null;
+      @*/
     public Optional<User> findById(long id) {
         return users.findById(id);
     }
