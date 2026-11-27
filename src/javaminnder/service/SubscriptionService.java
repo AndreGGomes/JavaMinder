@@ -82,13 +82,22 @@ public class SubscriptionService {
         subscription.touch();
         return repository.update(subscription);
     }
-
+    
+    /*@ public behavior
+      @   requires repository != null && user != null;
+      @   assignable \everything;
+      @*/
     public void delete(User user, long id) {
         require(user, id);
         repository.deleteById(id);
     }
 
     /** Registra o pagamento do ciclo atual e avança a data de cobrança. */
+    /*@ public behavior
+      @   requires repository != null && user != null;
+      @   assignable \everything;
+      @   ensures \result != null;
+      @*/
     public Subscription registerPayment(User user, long id) {
         Subscription subscription = require(user, id);
         if (!subscription.isBillable()) {
