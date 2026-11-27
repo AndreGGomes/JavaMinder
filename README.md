@@ -132,9 +132,9 @@ interrupção no meio da escrita não corrompe o JSON.
 
 ## Verificação JML (OpenJML)
 
-As classes já anotadas (`service/Session` e os enums de `model/`) usam JML em
-comentários `/*@ ... @*/`, ignorados pelo `javac`, e podem ser verificadas
-estaticamente:
+As classes já anotadas (`service/Session`, os enums de `model/` e as classes de
+`storage/`, isto é `Json` e `JsonSyntaxException`) usam JML em comentários
+`/*@ ... @*/`, ignorados pelo `javac`, e podem ser verificadas estaticamente:
 
 ```bash
 ./jml-check.sh
@@ -153,3 +153,24 @@ trocado por uma versão provável.
 A ferramenta não é dependência do projeto: baixe o release Linux do
 [OpenJML 21](https://github.com/OpenJML/OpenJML/releases), extraia em
 `.tools/openjml` (pasta ignorada no git) e rode o script.
+
+### Limitações do OpenJML 21 que moldam o código
+
+O `Json` foi escrito para caber no que o ESC 21 consegue provar, sem mudar o
+comportamento observável:
+
+- um laço não pode chamar método com efeito colateral (`List.add`, `Map.put`,
+  ou mesmo um método próprio que só atribui um campo); por isso a leitura de
+  objetos, arrays e strings avança um membro/elemento/caractere por chamada
+  recursiva;
+- `List.add(null)` nunca é provável (`containsNull`), então elementos nulos
+  viajam como o valor sentinela `NULL_VALUE` e são convertidos por `unbox`;
+- alocar (`new LinkedHashMap<>()`, `new ArrayList<>()`) tem frame tudo-é-
+  modificável, o que apaga o conhecimento sobre campos; os métodos que alocam
+  reatribuem `position` a partir de uma cópia local logo depois da alocação;
+- `String.valueOf(long)` e `String.valueOf(Object)` não têm contrato utilizável
+  pelo ESC, então `stringify`/`render` recebem tratamento próprio;
+- cláusulas que relacionam a posição (`position >= \old(position) + k`,
+  `position <= source.length()`) em métodos recursivos ou com laço em volta de
+  chamadas custam tempo de prova; ficam só onde o provador as fecha rápido, e
+  `jml-check.sh` roda com `--timeout 300`.
