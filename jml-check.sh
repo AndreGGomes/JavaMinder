@@ -27,6 +27,8 @@ FILES=(
   src/javaminnder/model/Subscription.java
   src/javaminnder/service/Session.java
   src/javaminnder/service/AuthService.java
+  src/javaminnder/storage/JsonSyntaxException.java
+  src/javaminnder/storage/Json.java
 )
 
-"$OPENJML" --esc -cp out "${FILES[@]}"
+"$OPENJML" --esc -cp out --timeout 300 "${FILES[@]}"
