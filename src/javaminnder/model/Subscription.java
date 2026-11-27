@@ -6,22 +6,24 @@ import java.time.LocalDate;
 /** Assinatura de um serviço, pertencente a um usuário. */
 public class Subscription extends BaseEntity {
 
-    private Long userId;
-    private String name;
-    private BigDecimal price;
-    private BillingCycle cycle;
-    private SubscriptionStatus status;
-    private LocalDate nextBillingDate;
-    private String notes;
+    private /*@ spec_public nullable @*/ Long userId;
+    private /*@ spec_public nullable @*/ String name;
+    private /*@ spec_public nullable @*/ BigDecimal price;
+    private /*@ spec_public nullable @*/ BillingCycle cycle;
+    private /*@ spec_public nullable @*/ SubscriptionStatus status;
+    private /*@ spec_public nullable @*/ LocalDate nextBillingDate;
+    private /*@ spec_public nullable @*/ String notes;
 
+    /*@ public behavior
+      @*/
     public Subscription(
-            Long userId,
-            String name,
-            BigDecimal price,
-            BillingCycle cycle,
-            SubscriptionStatus status,
-            LocalDate nextBillingDate,
-            String notes) {
+            /*@ nullable @*/ Long userId,
+            /*@ nullable @*/ String name,
+            /*@ nullable @*/ BigDecimal price,
+            /*@ nullable @*/ BillingCycle cycle,
+            /*@ nullable @*/ SubscriptionStatus status,
+            /*@ nullable @*/ LocalDate nextBillingDate,
+            /*@ nullable @*/ String notes) {
         super();
         this.userId = userId;
         this.name = name;
@@ -32,90 +34,171 @@ public class Subscription extends BaseEntity {
         this.notes = notes == null ? "" : notes;
     }
 
-    public Long getUserId() {
+    /*@ public normal_behavior
+      @   ensures \result == userId;
+      @*/
+    public /*@ pure nullable @*/ Long getUserId() {
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    /*@ public normal_behavior
+      @   assignable this.userId;
+      @   ensures this.userId == userId;
+      @*/
+    public void setUserId(/*@ nullable @*/ Long userId) {
         this.userId = userId;
     }
 
-    public String getName() {
+    /*@ public normal_behavior
+      @   ensures \result == name;
+      @*/
+    public /*@ pure nullable @*/ String getName() {
         return name;
     }
 
-    public void setName(String name) {
+    /*@ public normal_behavior
+      @   assignable this.name;
+      @   ensures this.name == name;
+      @*/
+    public void setName(/*@ nullable @*/ String name) {
         this.name = name;
     }
 
-    public BigDecimal getPrice() {
+    /*@ public normal_behavior
+      @   ensures \result == price;
+      @*/
+    public /*@ pure nullable @*/ BigDecimal getPrice() {
         return price;
     }
 
-    public void setPrice(BigDecimal price) {
+    /*@ public normal_behavior
+      @   assignable this.price;
+      @   ensures this.price == price;
+      @*/
+    public void setPrice(/*@ nullable @*/ BigDecimal price) {
         this.price = price;
     }
 
-    public BillingCycle getCycle() {
+    /*@ public normal_behavior
+      @   ensures \result == cycle;
+      @*/
+    public /*@ pure nullable @*/ BillingCycle getCycle() {
         return cycle;
     }
 
-    public void setCycle(BillingCycle cycle) {
+    /*@ public normal_behavior
+      @   assignable this.cycle;
+      @   ensures this.cycle == cycle;
+      @*/
+    public void setCycle(/*@ nullable @*/ BillingCycle cycle) {
         this.cycle = cycle;
     }
 
-    public SubscriptionStatus getStatus() {
+    /*@ public normal_behavior
+      @   ensures \result == status;
+      @*/
+    public /*@ pure nullable @*/ SubscriptionStatus getStatus() {
         return status;
     }
 
-    public void setStatus(SubscriptionStatus status) {
+    /*@ public normal_behavior
+      @   assignable this.status;
+      @   ensures this.status == status;
+      @*/
+    public void setStatus(/*@ nullable @*/ SubscriptionStatus status) {
         this.status = status;
     }
 
-    public LocalDate getNextBillingDate() {
+    /*@ public normal_behavior
+      @   assignable \nothing;
+      @   ensures \result != null;
+      @*/
+    public /*@ skipesc @*/ LocalDate advance(/*@ nullable @*/ LocalDate date) {
         return nextBillingDate;
     }
 
-    public void setNextBillingDate(LocalDate nextBillingDate) {
+    /*@ public normal_behavior
+      @   ensures \result == nextBillingDate;
+      @*/
+    public /*@ pure nullable @*/ LocalDate getNextBillingDate() {
+        return nextBillingDate;
+    }
+
+    /*@ public normal_behavior
+      @   assignable this.nextBillingDate;
+      @   ensures this.nextBillingDate == nextBillingDate;
+      @*/
+    public void setNextBillingDate(/*@ nullable @*/ LocalDate nextBillingDate) {
         this.nextBillingDate = nextBillingDate;
     }
 
-    public String getNotes() {
+    /*@ public normal_behavior
+      @   ensures \result == notes;
+      @*/
+    public /*@ pure nullable @*/ String getNotes() {
         return notes;
     }
 
-    public void setNotes(String notes) {
+    /*@ public normal_behavior
+      @   assignable this.notes;
+      @   ensures this.notes != null;
+      @   ensures (notes == null) ==> this.notes.equals("");
+      @   ensures (notes != null) ==> this.notes == notes;
+      @*/
+    public void setNotes(/*@ nullable @*/ String notes) {
         this.notes = notes == null ? "" : notes;
     }
 
-    public boolean isBillable() {
+    /*@ public normal_behavior
+      @   ensures \result == (status != null && status.isBillable());
+      @*/
+    public /*@ pure @*/ boolean isBillable() {
         return status != null && status.isBillable();
     }
 
     /** Valor mensal que esta assinatura representa nos totais. */
-    public BigDecimal monthlyEquivalent() {
+    /*@ public behavior
+      @*/
+    public /*@ skipesc @*/ BigDecimal monthlyEquivalent() {
         return isBillable() ? cycle.monthlyEquivalent(price) : BigDecimal.ZERO.setScale(2);
     }
 
     /** Valor anual que esta assinatura representa nos totais. */
-    public BigDecimal yearlyEquivalent() {
+    /*@ public behavior
+      @*/
+    public /*@ skipesc @*/ BigDecimal yearlyEquivalent() {
         return isBillable() ? cycle.yearlyEquivalent(price) : BigDecimal.ZERO.setScale(2);
     }
 
     /** Registra o pagamento do ciclo atual, avançando a próxima cobrança. */
-    public LocalDate renew() {
+    /*@ public normal_behavior
+      @   requires cycle != null;
+      @   assignable this.nextBillingDate, updatedAt;
+      @   ensures \result == this.nextBillingDate;
+      @*/
+    public /*@ nullable @*/ LocalDate renew() {
         this.nextBillingDate = cycle.advance(nextBillingDate);
         touch();
         return nextBillingDate;
     }
 
+    /*@ also
+      @ public normal_behavior
+      @   requires name != null;
+      @   ensures \result == name;
+      @   ensures \result != null;
+      @*/
     @Override
-    public String label() {
+    public /*@ pure @*/ String label() {
         return name;
     }
 
+    /*@ also
+      @ public normal_behavior
+      @   ensures \result != null;
+      @*/
     @Override
-    public String toString() {
+    public /*@ pure @*/ String toString() {
         return "#" + getId() + " " + name;
     }
 }

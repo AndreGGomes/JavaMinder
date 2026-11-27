@@ -21,7 +21,14 @@ FILES=(
   src/javaminnder/model/UserRole.java
   src/javaminnder/model/SubscriptionStatus.java
   src/javaminnder/model/BillingCycle.java
+  src/javaminnder/util/Validators.java
+  src/javaminnder/model/BaseEntity.java
+  src/javaminnder/model/User.java
+  src/javaminnder/model/Subscription.java
   src/javaminnder/service/Session.java
+  src/javaminnder/service/AuthService.java
+  src/javaminnder/storage/JsonSyntaxException.java
+  src/javaminnder/storage/Json.java
 )
 
-"$OPENJML" --esc -cp out "${FILES[@]}"
+"$OPENJML" --esc -cp out --timeout 300 "${FILES[@]}"

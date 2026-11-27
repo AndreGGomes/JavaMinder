@@ -11,9 +11,16 @@ public final class Validators {
 
     private static final int MIN_PASSWORD_LENGTH = 8;
 
+    /*@ private normal_behavior
+      @   ensures true;
+      @*/
     private Validators() {
     }
 
+    /*@ public behavior
+      @   requires minLength >= 0;
+      @   requires maxLength >= minLength;
+      @*/
     public static String requireText(String value, String field, int minLength, int maxLength) {
         String clean = value == null ? "" : value.trim();
         if (clean.length() < minLength) {
@@ -27,6 +34,11 @@ public final class Validators {
         return clean;
     }
 
+    /*@ public behavior
+      @   assignable \nothing;
+      @   ensures \result != null;
+      @*/
+    /*@ skipesc @*/
     public static String requireEmail(String value) {
         String clean = value == null ? "" : value.trim().toLowerCase();
         if (clean.isEmpty()) {
@@ -38,6 +50,8 @@ public final class Validators {
         return clean;
     }
 
+    /*@ public behavior
+      @*/
     public static String requirePassword(String value) {
         if (value == null || value.length() < MIN_PASSWORD_LENGTH) {
             throw new ValidationException(

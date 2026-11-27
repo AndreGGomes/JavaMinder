@@ -10,6 +10,7 @@ public class Session {
 
     /*@ public normal_behavior
       @   requires user != null;
+      @   assignable this.currentUser;
       @   ensures currentUser == user;
       @*/
     public void login(User user) {

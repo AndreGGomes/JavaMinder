@@ -13,10 +13,18 @@ import javaminnder.util.Validators;
 /** Regras de cadastro, autenticação e troca de senha. */
 public class AuthService {
 
-    private final UserRepository users;
-    private final Pbkdf2PasswordHasher passwordHasher;
-    private final Session session;
+    /*@ spec_public @*/ private final UserRepository users;
+    /*@ spec_public @*/ private final Pbkdf2PasswordHasher passwordHasher;
+    /*@ spec_public @*/ private final Session session;
 
+    /*@ public normal_behavior
+      @   requires users != null;
+      @   requires passwordHasher != null;
+      @   requires session != null;
+      @   ensures this.users == users;
+      @   ensures this.passwordHasher == passwordHasher;
+      @   ensures this.session == session;
+      @*/
     public AuthService(
             UserRepository users, Pbkdf2PasswordHasher passwordHasher, Session session) {
         this.users = users;
@@ -44,6 +52,10 @@ public class AuthService {
     }
 
     /** Autentica e abre a sessão. Mensagem genérica para não revelar qual campo errou. */
+    /*@ public behavior
+      @   assignable \everything;
+      @   ensures \result != null;
+      @*/
     public User login(String email, String password) {
         String cleanEmail = Validators.requireEmail(email);
         if (password == null || password.isEmpty()) {
@@ -51,7 +63,8 @@ public class AuthService {
         }
         User user = users.findByEmail(cleanEmail)
                 .orElseThrow(() -> new AuthException("E-mail ou senha inválidos."));
-        if (!passwordHasher.verify(password, user.getPasswordHash())) {
+        /*@ nullable @*/ String passwordHash = user.getPasswordHash();
+        if (passwordHash == null || !passwordHasher.verify(password, passwordHash)) {
             throw new AuthException("E-mail ou senha inválidos.");
         }
         session.login(user);
